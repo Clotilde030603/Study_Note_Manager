@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Note Manager</title>
+  <link rel="stylesheet" href="css/style.css?v=ui-polish" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-copy">
+      <div class="title-row">
+        <span class="app-icon" aria-hidden="true">
+          <svg class="app-logo" viewBox="0 0 44 44" focusable="false">
+            <rect class="logo-sheet" x="12" y="9" width="20" height="25" rx="4" />
+            <path class="logo-fold" d="M28 9v6a2 2 0 0 0 2 2h2" />
+            <path class="logo-line" d="M17 18h8M17 23h10M17 28h6" />
+            <path class="logo-pen" d="M28.5 27.5l4.2 4.2M30.2 25.8l4.2 4.2" />
+          </svg>
+        </span>
+        <h1>Study Note Manager</h1>
+      </div>
+      <p class="subtitle">강의 노트와 과제 메모를 한 곳에서 정리하고, 필요한 내용을 빠르게 찾아보세요.</p>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel form-panel" aria-labelledby="formTitle">
+      <div class="section-title-row">
+        <span class="section-icon" aria-hidden="true">✎</span>
+        <h2 id="formTitle">새 노트 작성</h2>
+      </div>
+      <form id="noteForm" class="note-form">
+        <label for="title">제목</label>
+        <input id="title" name="title" type="text" maxlength="120" placeholder="예: 운영체제 과제 정리" required />
+
+        <label for="category">카테고리</label>
+        <select id="category" name="category">
+          <option value="General">General</option>
+          <option value="Lecture">Lecture</option>
+          <option value="Assignment">Assignment</option>
+          <option value="Exam">Exam</option>
+          <option value="Project">Project</option>
+          <option value="Reading">Reading</option>
+        </select>
+
+        <label for="content">내용</label>
+        <textarea id="content" name="content" rows="7" placeholder="학습 내용이나 과제 메모를 입력하세요." required></textarea>
+
+        <div class="toggle-field">
+          <input id="isImportant" name="isImportant" type="checkbox" class="sr-only" />
+          <button id="importantToggle" class="star-toggle" type="button" aria-pressed="false" aria-controls="isImportant">
+            <span class="star-icon" aria-hidden="true">☆</span>
+            <span>중요</span>
+          </button>
+        </div>
+
+        <div class="form-actions">
+          <button id="submitButton" type="submit" class="primary-button">노트 추가</button>
+          <button id="cancelEditButton" type="button" class="secondary-button hidden">수정 취소</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel list-panel" aria-labelledby="listTitle">
+      <div class="list-header">
+        <div class="list-title-wrap">
+          <div class="section-title-row">
+            <span class="section-icon" aria-hidden="true">☷</span>
+            <h2 id="listTitle">노트 목록</h2>
+            <span id="noteCount" class="count-pill">노트를 불러오는 중입니다.</span>
+          </div>
+        </div>
+        <button id="refreshButton" class="secondary-button" type="button">↻ 새로고침</button>
+      </div>
+
+      <div class="toolbar" aria-label="노트 검색 및 필터">
+        <input id="searchInput" type="search" placeholder="제목 또는 내용 검색" />
+        <select id="filterCategory" aria-label="카테고리 필터">
+          <option value="">전체 카테고리</option>
+          <option value="General">General</option>
+          <option value="Lecture">Lecture</option>
+          <option value="Assignment">Assignment</option>
+          <option value="Exam">Exam</option>
+          <option value="Project">Project</option>
+          <option value="Reading">Reading</option>
+        </select>
+        <input id="filterImportant" type="checkbox" class="sr-only" />
+        <button id="filterImportantToggle" class="star-toggle filter-toggle" type="button" aria-pressed="false" aria-controls="filterImportant">
+          <span class="star-icon" aria-hidden="true">☆</span>
+          <span>중요</span>
+        </button>
+      </div>
+
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+      <div id="notesContainer" class="notes-grid"></div>
+    </section>
+  </main>
+
+  <!-- 컨테이너 실행 시 env.js가 API 주소를 주입한다. 로컬 파일 실행 시 app.js의 기본값(/api)을 사용한다. -->
+  <script src="env.js"></script>
+  <script src="js/app.js?v=ui-polish"></script>
+</body>
+</html>

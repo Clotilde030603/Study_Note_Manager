@@ -1,0 +1,75 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+    container_name: study-note-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    environment:
+      API_BASE_URL: ${API_BASE_URL:-/api}
+    depends_on:
+      - backend
+    networks:
+      - study-note-network
+
+  backend:
+    build:
+      context: ./backend
+    container_name: study-note-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-5001}:5001"
+    environment:
+      PORT: 5001
+      NODE_ENV: ${NODE_ENV:-production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-study_user}
+      DB_PASSWORD: ${DB_PASSWORD:-study_password}
+      DB_NAME: ${DB_NAME:-study_note_manager}
+      DB_CONNECTION_LIMIT: ${DB_CONNECTION_LIMIT:-10}
+      DB_CHARSET: ${DB_CHARSET:-utf8mb4}
+      DB_CONNECT_RETRIES: ${DB_CONNECT_RETRIES:-30}
+      DB_CONNECT_RETRY_DELAY_MS: ${DB_CONNECT_RETRY_DELAY_MS:-2000}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - study-note-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: study-note-mysql
+    restart: unless-stopped
+    ports:
+      - "${MYSQL_PORT:-3307}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-study_note_manager}
+      MYSQL_USER: ${MYSQL_USER:-study_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-study_password}
+      LANG: C.UTF-8
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - study-note-network
+
+volumes:
+  mysql-data:
+
+networks:
+  study-note-network:
+    driver: bridge
