@@ -1,12 +1,20 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
+function requireEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} environment variable is required`);
+  }
+  return value;
+}
+
 // README 설명용: 모든 DB 접속 설정은 환경변수에서 읽어 Docker Compose와 로컬 실행을 모두 지원한다.
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: Number(process.env.DB_PORT || 3306),
   user: process.env.DB_USER || 'study_user',
-  password: process.env.DB_PASSWORD || 'REPLACE_WITH_STRONG_LOCAL_DB_PASSWORD',
+  password: requireEnv('DB_PASSWORD'),
   database: process.env.DB_NAME || 'study_note_manager',
   charset: process.env.DB_CHARSET || 'utf8mb4',
   waitForConnections: true,
