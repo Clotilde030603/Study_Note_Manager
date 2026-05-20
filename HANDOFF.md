@@ -75,7 +75,7 @@ http://localhost:8080
 - `node_modules`, Docker volume, `.DS_Store`, `.omx` 같은 로컬 파일은 제출하지 않습니다.
 - backend 컨테이너에서 DB host는 `localhost`가 아니라 Compose 서비스명인 `mysql`입니다.
 - 포트 기준은 README와 동일하게 frontend `8080`, backend `5001`, mysql `3307`입니다.
-- 실행 화면 캡처는 `docs/screenshots/` 위치를 사용하면 됩니다.
+- 실행 화면 캡처 또는 시연 영상은 저장소에 포함하지 않고 과제 제출물에 별도 첨부하면 됩니다.
 
 ---
 
@@ -86,6 +86,6 @@ http://localhost:8080
 | `README.md` | 과제 보고서 메인 문서 |
 | `AI_PROMPTS.md` | AI 사용 내역 정리 |
 | `HANDOFF.md` | 실행 및 제출 전 확인용 요약 |
-| `docs/screenshots/README.md` | 실행 캡처 저장 위치 안내 |
+| 실행 결과 캡처 또는 시연 영상 | 과제 제출물에 별도 첨부 |
 
 제출 시에는 보통 `README.md`와 `AI_PROMPTS.md`를 중심으로 확인하면 됩니다.

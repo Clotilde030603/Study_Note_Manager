@@ -1,12 +1,14 @@
 FROM node:20-alpine
 
 WORKDIR /app
+RUN chown node:node /app
 
-COPY package*.json ./
-RUN npm install --omit=dev
+COPY --chown=node:node package*.json ./
+USER node
+RUN npm ci --omit=dev
 
-COPY src ./src
-COPY .env.example ./.env.example
+COPY --chown=node:node src ./src
+COPY --chown=node:node .env.example ./.env.example
 
 ENV NODE_ENV=production
 ENV PORT=5001
