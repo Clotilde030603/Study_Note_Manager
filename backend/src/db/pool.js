@@ -6,7 +6,7 @@ const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: Number(process.env.DB_PORT || 3306),
   user: process.env.DB_USER || 'study_user',
-  password: process.env.DB_PASSWORD || 'study_password',
+  password: process.env.DB_PASSWORD || 'REPLACE_WITH_LOCAL_DB_PASSWORD',
   database: process.env.DB_NAME || 'study_note_manager',
   charset: process.env.DB_CHARSET || 'utf8mb4',
   waitForConnections: true,

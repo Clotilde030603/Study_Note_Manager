@@ -159,9 +159,9 @@ MySQL: localhost:3307
 
 ## 7. 주요 환경변수
 
-`.env.example`에는 Docker Compose 실행에 필요한 기본값이 들어 있습니다.
+`.env.example`은 실행에 필요한 키와 예시 placeholder를 보여주는 템플릿입니다. 실제 실행 비밀번호는 `.env.example`에 저장하지 말고, 로컬에서만 사용하는 `.env`에 직접 설정합니다.
 
-| 환경변수 | 기본값 | 설명 |
+| 환경변수 | 예시 값 | 설명 |
 | --- | --- | --- |
 | `FRONTEND_PORT` | `8080` | Frontend 호스트 포트 |
 | `API_BASE_URL` | `/api` | Frontend API base URL |
@@ -170,15 +170,16 @@ MySQL: localhost:3307
 | `DB_HOST` | `mysql` | Backend에서 접근할 DB 서비스명 |
 | `DB_PORT` | `3306` | Backend에서 접근할 DB 포트 |
 | `DB_USER` | `study_user` | MySQL 사용자 |
-| `DB_PASSWORD` | `study_password` | MySQL 비밀번호 |
+| `DB_PASSWORD` | `REPLACE_WITH_LOCAL_DB_PASSWORD` | Backend가 사용할 MySQL 비밀번호 placeholder |
 | `DB_NAME` | `study_note_manager` | MySQL 데이터베이스명 |
 | `DB_CHARSET` | `utf8mb4` | DB 문자셋 |
 | `MYSQL_PORT` | `3307` | MySQL 호스트 포트 |
+| `MYSQL_ROOT_PASSWORD` | `REPLACE_WITH_LOCAL_ROOT_PASSWORD` | MySQL root 비밀번호 placeholder |
 | `MYSQL_DATABASE` | `study_note_manager` | 초기 생성 DB명 |
 | `MYSQL_USER` | `study_user` | 초기 생성 사용자 |
-| `MYSQL_PASSWORD` | `study_password` | 초기 생성 사용자 비밀번호 |
+| `MYSQL_PASSWORD` | `REPLACE_WITH_LOCAL_DB_PASSWORD` | 초기 생성 사용자 비밀번호 placeholder |
 
-실제 비밀번호를 저장하는 `.env` 파일은 Git에 포함하지 않고, 제출용 예시는 `.env.example`로만 관리합니다.
+`DB_PASSWORD`와 `MYSQL_PASSWORD`는 같은 MySQL 사용자(`MYSQL_USER`/`DB_USER`)에 대한 값이므로 일반적으로 동일하게 설정합니다. 실제 비밀번호를 저장하는 `.env` 파일은 Git에 포함하지 않고, 제출용 예시는 `.env.example`로만 관리합니다.
 
 ---
 
@@ -198,8 +199,11 @@ docker compose version
 
 ### 8.2 환경변수 파일 생성
 
+`.env.example`을 로컬 실행용 `.env`로 복사한 뒤, placeholder 비밀번호를 실제 로컬 값으로 변경합니다. `.env`는 `.gitignore`에 포함되어 있으므로 Git에 커밋하지 않습니다.
+
 ```bash
 cp .env.example .env
+# 편집기에서 DB_PASSWORD, MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD 값을 로컬 비밀번호로 변경
 ```
 
 ### 8.3 빌드 및 실행
@@ -249,6 +253,19 @@ docker compose down -v
 ```
 
 `down -v`는 저장된 MySQL 데이터도 삭제하므로 필요할 때만 사용해야 합니다.
+
+### 8.7 DB 비밀번호 변경 후 접속 오류가 나는 경우
+
+MySQL은 최초 초기화 시점의 사용자/비밀번호를 `mysql-data` volume에 저장합니다. `.env`에서 `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `DB_PASSWORD`를 변경한 뒤 기존 volume을 그대로 재사용하면 backend가 이전 비밀번호로 생성된 DB에 접속하지 못할 수 있습니다.
+
+로컬 데이터를 초기화해도 되는 상황이면 다음 명령으로 volume을 삭제한 뒤 다시 실행합니다.
+
+```bash
+docker compose down -v
+docker compose up --build -d
+```
+
+`docker compose down -v`는 저장된 MySQL 데이터를 삭제하므로 필요한 데이터가 있으면 먼저 백업합니다.
 
 ---
 
