@@ -1,262 +1,211 @@
 # Study Note Manager
 
-Docker Compose로 실행할 수 있게 만든 3-tier 구조의 학습 노트 관리 웹서비스입니다. 브라우저에서 노트를 작성하고, 수정/삭제하거나 검색과 필터로 필요한 내용을 확인할 수 있도록 구성했습니다.
+Study Note Manager는 Docker와 Docker Compose를 이용하여 구성한 3-tier 구조의 학습 노트 관리 웹서비스이다. 사용자는 브라우저에서 학습 노트를 작성하고, 저장된 노트를 조회·수정·삭제할 수 있으며, 검색과 카테고리 필터, 중요 표시 기능을 사용할 수 있다.
+
+본 프로젝트에서는 과제 요구사항에 맞추어 화면을 담당하는 Presentation Tier, API 처리를 담당하는 Application Tier, 데이터를 저장하는 Data Tier를 각각 별도의 컨테이너로 분리하였다. 전체 서비스는 `docker compose up --build` 명령으로 실행할 수 있도록 구성하였다.
 
 ---
 
 ## 1. 프로젝트 개요
 
-| 항목 | 내용 |
+프로젝트명은 Study Note Manager이며, 강의 노트와 과제 메모를 한 곳에서 관리하는 웹서비스를 주제로 하였다. 과제의 핵심 조건은 Docker Compose 기반으로 최소 3개 이상의 컨테이너를 실행하고, Presentation Tier, Application Tier, Data Tier를 명확하게 구분하는 것이다.
+
+본 프로젝트의 구성은 다음과 같다.
+
+- Presentation Tier는 `frontend` 서비스가 담당한다. Nginx 컨테이너에서 HTML, CSS, JavaScript 정적 파일을 제공하고, 브라우저의 `/api` 요청을 backend 컨테이너로 전달한다.
+- Application Tier는 `backend` 서비스가 담당한다. Node.js와 Express로 작성한 REST API 서버이며, 노트 생성, 조회, 수정, 삭제, 검색, 필터 기능을 처리한다.
+- Data Tier는 `mysql` 서비스가 담당한다. MySQL 8.0을 사용하며, 노트 데이터를 저장하고 Docker volume을 통해 데이터를 유지한다.
+
+과제 요구사항과 프로젝트 구현의 대응 관계는 다음과 같이 정리할 수 있다.
+
+| 과제 요구사항 | 프로젝트 구현 |
 | --- | --- |
-| 프로젝트명 | Study Note Manager |
-| 목적 | 강의 노트와 과제 메모를 한 곳에서 관리하는 웹서비스 구현 |
-| 구조 | Docker Compose 기반 3-tier 구조 |
-| 실행 환경 | localhost |
-| Frontend | `http://localhost:8080` |
-| Backend API | `http://localhost:5001/api` |
-| Database | MySQL 8.0 |
-
-주요 기능은 노트 작성, 조회, 수정, 삭제(CRUD), 검색, 카테고리 필터, 중요 표시입니다. 과제에서 요구한 3-tier 구조를 맞추기 위해 화면, API 서버, DB를 각각 다른 컨테이너로 나누었습니다.
-
-
-### 1.1 과제 목표와 프로젝트 주제
-
-이 과제에서는 Docker와 Docker Compose를 사용해서 최소 3개 컨테이너로 이루어진 3-tier 웹서비스를 만드는 것이 목표였습니다. 그래서 프론트엔드, 백엔드, 데이터베이스를 나누어 구성하고 각 계층이 어떻게 연결되는지 정리했습니다.
-
-제가 선택한 주제는 학습 노트 관리 서비스이고, 과제 요구사항과의 대응은 다음과 같습니다.
-
-| 과제 요구사항 | 이 프로젝트의 구현 |
-| --- | --- |
-| Presentation Tier | `frontend` 컨테이너에서 HTML/CSS/JavaScript 화면과 Nginx reverse proxy 제공 |
-| Application Tier | `backend` 컨테이너에서 Express REST API와 CRUD/검색/필터 처리 |
-| Data Tier | `mysql` 컨테이너에서 MySQL 8.0 DB와 초기 테이블, volume 기반 데이터 저장 처리 |
-| 최소 3개 컨테이너 | `frontend`, `backend`, `mysql` 3개 Compose 서비스 사용 |
-| docker-compose 실행 | `docker compose up --build -d` 한 번으로 전체 서비스 실행 |
-| localhost 동작 | Frontend `http://localhost:8080`, Backend health `http://localhost:5001/api/health` |
+| 3-tier 웹서비스 구현 | `frontend`, `backend`, `mysql`로 계층 분리 |
+| 최소 3개 컨테이너 | Docker Compose 서비스 3개 사용 |
+| docker-compose 실행 | `docker compose up --build`로 전체 실행 |
+| 계층별 역할 설명 | README에 각 tier와 컨테이너 역할 정리 |
+| 데이터 유지 | MySQL named volume `mysql-data` 사용 |
 
 ---
 
-## 2. 기술 스택
+## 2. 3-tier 구조 설명
 
-| 구분 | 사용 기술 |
-| --- | --- |
-| Presentation Tier | HTML, CSS, JavaScript, Nginx |
-| Application Tier | Node.js, Express |
-| Data Tier | MySQL 8.0 |
-| 실행 환경 | Docker, Docker Compose |
-| 네트워크 | Docker Compose bridge network |
-| 데이터 유지 | Docker named volume `mysql-data` |
+### 2.1 Presentation Tier: frontend
 
----
+Presentation Tier는 `frontend` 컨테이너로 구성하였다. 이 컨테이너는 `frontend/Dockerfile`을 통해 Nginx 기반 이미지로 빌드된다. Nginx는 `index.html`, `css/style.css`, `js/app.js` 같은 정적 파일을 제공하며, 사용자는 `http://localhost:8080`으로 접속하여 화면을 사용한다.
 
-## 3. 3-tier 구조
+프론트엔드 JavaScript는 기본적으로 `/api` 경로로 API 요청을 보낸다. 이 값은 `API_BASE_URL` 환경변수로 설정할 수 있으며, 기본값은 `/api`이다. 브라우저가 `/api`로 요청하면 Nginx가 `frontend/nginx.conf` 설정에 따라 내부 Docker Compose 네트워크의 `backend:5001`로 요청을 프록시한다.
 
-| Tier | Compose 서비스 | 컨테이너 이름 | 역할 |
-| --- | --- | --- | --- |
-| Presentation Tier | `frontend` | `study-note-frontend` | 사용자 화면 제공, 정적 파일 서빙, `/api` 요청 프록시 |
-| Application Tier | `backend` | `study-note-backend` | REST API 제공, CRUD/검색/필터 처리, DB 질의 |
-| Data Tier | `mysql` | `study-note-mysql` | 노트 데이터 저장, 테이블 초기화, volume 기반 데이터 유지 |
+### 2.2 Application Tier: backend
 
-### 3.1 Presentation Tier: frontend
+Application Tier는 `backend` 컨테이너로 구성하였다. 이 컨테이너는 Node.js 20 기반 이미지에서 Express 서버를 실행한다. 실제 서버 진입점은 `backend/src/server.js`이며, API 설정은 `backend/src/app.js`에 작성되어 있다.
 
-- Nginx로 `index.html`, CSS, JavaScript 파일을 서빙합니다.
-- 사용자는 `http://localhost:8080`으로 접속합니다.
-- 브라우저의 `/api` 요청은 Nginx 설정을 통해 backend 컨테이너로 전달됩니다.
+backend는 다음 API를 제공한다.
 
-### 3.2 Application Tier: backend
+- `GET /api/health`: API 서버와 DB 연결 상태 확인
+- `GET /api/notes`: 노트 목록 조회, 검색, 카테고리 필터, 중요 표시 필터
+- `GET /api/notes/search?q=키워드`: 검색 전용 API
+- `GET /api/notes/:id`: 특정 노트 조회
+- `POST /api/notes`: 새 노트 작성
+- `PUT /api/notes/:id`: 노트 수정
+- `PATCH /api/notes/:id/important`: 중요 표시 변경
+- `DELETE /api/notes/:id`: 노트 삭제
 
-- Express로 만든 REST API 서버입니다.
-- 노트 생성, 조회, 수정, 삭제, 검색, 카테고리 필터, 중요 표시 기능을 처리합니다.
-- MySQL 연결 pool을 사용하고, DB 컨테이너가 준비되기 전에는 재시도하도록 처리했습니다.
+backend는 `backend/src/db/pool.js`에서 MySQL connection pool을 만들고, DB 컨테이너가 준비되기 전에는 일정 횟수 동안 연결을 재시도한다. Docker Compose에서는 `DB_HOST=mysql`로 설정하여 `localhost`가 아니라 Compose 서비스명으로 DB에 접속한다.
 
-### 3.3 Data Tier: mysql
+### 2.3 Data Tier: mysql
 
-- MySQL 8.0을 사용하는 DB 컨테이너입니다.
-- `db/init/01_init.sql`을 통해 초기 테이블을 생성합니다.
-- `mysql-data` named volume을 사용해 컨테이너 재시작 후에도 데이터를 유지합니다.
+Data Tier는 `mysql` 컨테이너로 구성하였다. 이미지는 `mysql:8.0`을 사용하며, `db/init/01_init.sql` 파일을 통해 초기 데이터베이스와 `notes` 테이블을 생성한다. 테이블에는 제목, 내용, 카테고리, 중요 여부, 생성/수정 시간이 저장된다.
+
+MySQL 데이터는 `mysql-data`라는 Docker named volume에 저장된다. 따라서 `docker compose down`으로 컨테이너를 종료했다가 다시 실행해도 저장된 노트 데이터는 유지된다. 단, `docker compose down -v`를 실행하면 volume까지 삭제되므로 DB 데이터가 초기화된다.
 
 ---
 
-## 4. 전체 흐름도
+## 3. 전체 서비스 흐름
 
-```mermaid
-flowchart LR
-    User[사용자 브라우저]
-
-    subgraph Presentation[Presentation Tier]
-        Frontend[frontend\nNginx + HTML/CSS/JS\nlocalhost:8080]
-    end
-
-    subgraph Application[Application Tier]
-        Backend[backend\nNode.js + Express\nbackend:5001]
-    end
-
-    subgraph Data[Data Tier]
-        MySQL[mysql\nMySQL 8.0\nmysql:3306]
-        Volume[(mysql-data volume)]
-    end
-
-    User -->|HTTP| Frontend
-    Frontend -->|/api reverse proxy| Backend
-    Backend -->|SQL query| MySQL
-    MySQL -->|data persistence| Volume
-```
-
-노트 작성 요청의 처리 흐름은 다음과 같습니다.
-
-```mermaid
-sequenceDiagram
-    participant Browser as Browser
-    participant Frontend as Frontend(Nginx)
-    participant Backend as Backend(Express)
-    participant DB as MySQL
-
-    Browser->>Frontend: http://localhost:8080 접속
-    Frontend-->>Browser: HTML/CSS/JS 반환
-    Browser->>Frontend: POST /api/notes
-    Frontend->>Backend: http://backend:5001/api/notes 프록시
-    Backend->>DB: INSERT INTO notes ...
-    DB-->>Backend: 저장 결과 반환
-    Backend-->>Frontend: JSON 응답
-    Frontend-->>Browser: JSON 응답 전달
-    Browser->>Browser: 노트 목록 갱신
-```
-
----
-
-## 5. 컨테이너 구성
-
-`docker-compose.yml`에는 과제 기준에 맞게 세 개의 서비스가 들어 있습니다.
-
-| 서비스 | 빌드/이미지 | 포트 매핑 | 주요 설정 |
-| --- | --- | --- | --- |
-| `frontend` | `./frontend` Dockerfile | `8080:80` | Nginx, `/api` reverse proxy |
-| `backend` | `./backend` Dockerfile | `127.0.0.1:5001:5001` | Express API, `DB_HOST=mysql`, 로컬 전용 바인딩 |
-| `mysql` | `mysql:8.0` | `127.0.0.1:3307:3306` | `utf8mb4`, healthcheck, `mysql-data` volume, 로컬 전용 바인딩 |
-
-세 컨테이너는 `study-note-network`라는 Compose bridge network에 연결됩니다.
-
-```yaml
-networks:
-  study-note-network:
-    driver: bridge
-```
-
-컨테이너끼리 통신할 때는 `localhost`가 아니라 Compose 서비스명을 사용했습니다.
-
-| 연결 | 주소 | 설명 |
-| --- | --- | --- |
-| Browser → frontend | `http://localhost:8080` | 웹 화면 접속 |
-| frontend → backend | `http://backend:5001/api/` | Nginx proxy |
-| backend → mysql | `mysql:3306` | DB 접속 |
-| Host → backend | `http://localhost:5001/api` | API 직접 테스트, `127.0.0.1`에만 바인딩 |
-| Host → mysql | `localhost:3307` | DB 클라이언트 접속, `127.0.0.1`에만 바인딩 |
-
----
-
-## 6. 포트 정보
-
-| 서비스 | 컨테이너 포트 | 호스트 포트 | 용도 |
-| --- | ---: | ---: | --- |
-| frontend | `80` | `8080` | 웹 UI 접속 |
-| backend | `5001` | `127.0.0.1:5001` | REST API 확인 |
-| mysql | `3306` | `127.0.0.1:3307` | MySQL 직접 접속 |
-
-localhost 기준 주소는 다음과 같습니다.
+전체 요청 흐름은 다음과 같다.
 
 ```text
-Frontend: http://localhost:8080
-Backend API: http://localhost:5001/api
-Backend Health Check: http://localhost:5001/api/health
-MySQL: localhost:3307
+사용자 브라우저
+→ frontend 컨테이너(Nginx, localhost:8080)
+→ /api 요청을 backend 컨테이너(Express, backend:5001)로 프록시
+→ backend 컨테이너가 mysql 컨테이너(mysql:3306)에 SQL 질의
+→ mysql-data volume에 데이터 저장 또는 조회
+→ 결과를 JSON으로 반환
+→ 브라우저 화면 갱신
 ```
 
----
-
-## 7. 주요 환경변수
-
-`.env.example`은 실행에 필요한 환경변수 이름과 예시 placeholder를 정리한 파일입니다. 실제 실행 비밀번호는 이 파일에 넣지 않고, 로컬에서만 사용하는 `.env`에 직접 적습니다. 비밀번호 관련 값은 Compose fallback을 두지 않았기 때문에 실행 전에 `.env.example`을 `.env`로 복사하고 값을 채워야 합니다.
-
-| 환경변수 | 예시 값 | 설명 |
-| --- | --- | --- |
-| `FRONTEND_PORT` | `8080` | Frontend 호스트 포트 |
-| `API_BASE_URL` | `/api` | Frontend API base URL |
-| `BACKEND_PORT` | `5001` | Backend 호스트 포트 |
-| `CORS_ORIGIN` | `http://localhost:8080` | 허용할 Frontend origin |
-| `DB_HOST` | `mysql` | Backend에서 접근할 DB 서비스명 |
-| `DB_PORT` | `3306` | Backend에서 접근할 DB 포트 |
-| `DB_USER` | `study_user` | MySQL 사용자 |
-| `DB_PASSWORD` | `REPLACE_WITH_STRONG_LOCAL_DB_PASSWORD` | Backend가 사용할 MySQL 비밀번호 placeholder |
-| `DB_NAME` | `study_note_manager` | MySQL 데이터베이스명 |
-| `DB_CHARSET` | `utf8mb4` | DB 문자셋 |
-| `MYSQL_PORT` | `3307` | MySQL 호스트 포트 |
-| `MYSQL_ROOT_PASSWORD` | `REPLACE_WITH_STRONG_LOCAL_ROOT_PASSWORD` | MySQL root 비밀번호 placeholder |
-| `MYSQL_DATABASE` | `study_note_manager` | 초기 생성 DB명 |
-| `MYSQL_USER` | `study_user` | 초기 생성 사용자 |
-| `MYSQL_PASSWORD` | `REPLACE_WITH_STRONG_LOCAL_DB_PASSWORD` | 초기 생성 사용자 비밀번호 placeholder |
-
-`DB_PASSWORD`와 `MYSQL_PASSWORD`는 같은 MySQL 사용자(`MYSQL_USER`/`DB_USER`)에 대한 값이므로 일반적으로 동일하게 설정합니다. 실제 비밀번호를 저장하는 `.env` 파일은 Git에 포함하지 않고, 제출용 예시는 `.env.example`로만 관리합니다.
+예를 들어 사용자가 브라우저에서 `http://localhost:8080`으로 접속하면 frontend 컨테이너가 정적 화면을 제공한다. 사용자가 노트를 생성하거나 조회하면 frontend는 `/api` 경로로 요청을 보내고, Nginx는 해당 요청을 backend 컨테이너로 전달한다. backend는 Express 기반 API 서버로 요청을 처리하며, 필요한 데이터는 Docker Compose 내부 네트워크에서 `mysql` 서비스명으로 MySQL 컨테이너에 접근하여 저장하거나 조회한다.
 
 ---
 
-## 8. 실행 방법
+## 4. 컨테이너 역할과 연결 방식
 
-### 8.1 사전 준비
+`docker-compose.yml`에는 `frontend`, `backend`, `mysql` 세 개의 서비스가 정의되어 있다. 세 서비스는 모두 `study-note-network`라는 Compose bridge network에 연결된다.
 
-- Docker Desktop 또는 Docker Engine
-- Docker Compose v2
+- `frontend` 서비스는 `study-note-frontend` 컨테이너로 실행된다. 호스트의 `8080` 포트를 컨테이너의 `80` 포트에 연결하여 웹 화면을 제공한다. 또한 `/api` 요청을 backend 서비스로 넘기는 reverse proxy 역할도 함께 수행한다.
+- `backend` 서비스는 `study-note-backend` 컨테이너로 실행된다. 컨테이너 내부에서는 `5001` 포트로 Express API 서버가 동작한다. 호스트에서는 `127.0.0.1:5001`로만 접근할 수 있게 바인딩하여 로컬 테스트 범위로 제한하였다.
+- `mysql` 서비스는 `study-note-mysql` 컨테이너로 실행된다. 컨테이너 내부에서는 `3306` 포트로 MySQL이 동작하며, 호스트에서는 `127.0.0.1:3307`로만 접근할 수 있게 설정하였다. backend 컨테이너는 호스트 포트가 아니라 내부 서비스명 `mysql:3306`으로 DB에 접근한다.
 
-버전 확인:
+컨테이너 간 연결에서 중요한 점은 컨테이너 내부에서 `localhost`를 사용하지 않는다는 것이다. Docker Compose 네트워크에서는 서비스명을 DNS 이름처럼 사용할 수 있으므로 frontend는 `backend:5001`로, backend는 `mysql:3306`으로 접근한다.
+
+---
+
+## 5. 사용 포트
+
+본 프로젝트의 기본 포트 설정은 다음과 같다.
+
+| 구분 | 컨테이너 포트 | 호스트 접근 주소 | 용도 |
+| --- | ---: | --- | --- |
+| frontend | 80 | `http://localhost:8080` | 웹 화면 접속 |
+| backend | 5001 | `http://localhost:5001/api` | API 직접 테스트 |
+| mysql | 3306 | `localhost:3307` | DB 클라이언트 직접 접속 |
+
+backend와 mysql의 호스트 포트는 `127.0.0.1`에만 바인딩되어 있다. 이는 과제 실행과 로컬 확인에는 충분하지만 외부 네트워크에 불필요하게 노출하지 않기 위한 설정이다.
+
+---
+
+## 6. 주요 설정
+
+### 6.1 Docker Compose 설정
+
+Compose 파일은 `docker-compose.yml`이다. 주요 설정은 다음과 같다.
+
+- `frontend`는 `./frontend` Dockerfile로 빌드한다.
+- `backend`는 `./backend` Dockerfile로 빌드한다.
+- `mysql`은 `mysql:8.0` 이미지를 사용한다.
+- `mysql`에는 healthcheck를 설정하여 DB가 준비되었는지 확인한다.
+- `backend`는 `depends_on`의 `service_healthy` 조건을 통해 MySQL 준비 이후 시작되도록 설정하였다.
+- 세 컨테이너는 `study-note-network` bridge network를 사용한다.
+- MySQL 데이터는 `mysql-data` volume에 저장된다.
+
+### 6.2 환경변수 설정
+
+루트의 `.env.example`은 Docker Compose 실행에 필요한 환경변수 예시 파일이다. 실제 실행할 때는 이 파일을 `.env`로 복사한 뒤 비밀번호 placeholder를 로컬에서 사용할 값으로 바꾸어야 한다.
+
+필수적으로 확인할 값은 다음과 같다.
+
+- `FRONTEND_PORT`: frontend 호스트 포트이며 기본값은 `8080`이다.
+- `API_BASE_URL`: frontend가 사용할 API 기본 경로이며 기본값은 `/api`이다.
+- `BACKEND_PORT`: backend 호스트 포트이며 기본값은 `5001`이다.
+- `CORS_ORIGIN`: backend에서 허용할 frontend origin이며 기본값은 `http://localhost:8080`이다.
+- `DB_HOST`: backend가 접근할 DB 주소이며 Compose 실행 시 `mysql`을 사용한다.
+- `DB_PASSWORD`: backend가 MySQL 사용자로 접속할 때 사용하는 비밀번호이다.
+- `MYSQL_ROOT_PASSWORD`: MySQL root 비밀번호이다.
+- `MYSQL_PASSWORD`: `MYSQL_USER` 사용자의 비밀번호이다.
+
+`DB_PASSWORD`와 `MYSQL_PASSWORD`는 같은 MySQL 사용자에 대한 값이므로 일반적으로 동일하게 설정한다. 비밀번호 관련 값은 placeholder fallback 없이 환경변수에서 읽도록 구성되어 있으므로, `.env`를 만들지 않거나 비밀번호를 비워 두면 MySQL 또는 backend가 정상적으로 시작하지 못할 수 있다.
+
+backend만 별도로 로컬에서 실행할 경우에는 `backend/.env.example`을 참고할 수 있다. 이 파일에서는 로컬 MySQL 접속을 가정하여 `DB_HOST=localhost` 예시를 제공한다.
+
+---
+
+## 7. 실행 방법
+
+### 7.1 사전 준비
+
+실행 전 Docker Desktop 또는 Docker Engine과 Docker Compose v2가 필요하다. 다음 명령으로 설치 여부를 확인할 수 있다.
 
 ```bash
 docker --version
 docker compose version
 ```
 
-### 8.2 환경변수 파일 생성
+### 7.2 환경변수 파일 생성
 
-먼저 `.env.example`을 로컬 실행용 `.env`로 복사하고, placeholder 비밀번호를 직접 사용할 값으로 바꿉니다. `.env`는 `.gitignore`에 포함되어 있으므로 커밋하지 않습니다. `DB_PASSWORD`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`가 없으면 MySQL 또는 backend가 정상 시작하지 못할 수 있습니다.
+먼저 루트 디렉터리에서 `.env.example`을 `.env`로 복사한다.
 
 ```bash
 cp .env.example .env
-# 편집기에서 DB_PASSWORD, MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD 값을 강한 로컬 비밀번호로 변경
 ```
 
-환경변수 설정이 제대로 들어갔는지 먼저 확인하려면 다음 명령을 실행합니다.
+그 다음 `.env` 파일을 열어 다음 값을 실제 로컬 비밀번호로 바꾼다.
+
+```text
+DB_PASSWORD=REPLACE_WITH_STRONG_LOCAL_DB_PASSWORD
+MYSQL_ROOT_PASSWORD=REPLACE_WITH_STRONG_LOCAL_ROOT_PASSWORD
+MYSQL_PASSWORD=REPLACE_WITH_STRONG_LOCAL_DB_PASSWORD
+```
+
+설정이 올바르게 적용되는지 확인하려면 다음 명령을 실행한다.
 
 ```bash
 docker compose config
 ```
 
-출력에서 `DB_PASSWORD`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` 값이 비어 있다면 `.env`를 다시 확인합니다.
+출력에서 비밀번호 관련 값이 비어 있다면 `.env` 파일을 다시 확인해야 한다.
 
-### 8.3 빌드 및 실행
+### 7.3 빌드 및 실행
+
+전체 서비스를 빌드하고 실행하려면 다음 명령을 사용한다.
 
 ```bash
 docker compose up --build
 ```
 
-백그라운드에서 실행하려면 다음 명령을 사용합니다.
+백그라운드에서 실행하려면 다음과 같이 실행한다.
 
 ```bash
 docker compose up --build -d
 ```
 
-### 8.4 상태 확인
+실행 상태는 다음 명령으로 확인한다.
 
 ```bash
 docker compose ps
 ```
 
-정상 실행되면 frontend, backend, mysql 컨테이너가 올라오고 mysql은 healthy 상태로 표시됩니다.
+정상 실행되면 `frontend`, `backend`, `mysql` 컨테이너가 실행 중이어야 하며, MySQL은 `healthy` 상태로 표시된다.
 
-### 8.5 로그 확인
+### 7.4 로그 확인과 종료
+
+전체 로그를 확인하려면 다음 명령을 사용한다.
 
 ```bash
 docker compose logs -f
 ```
 
-특정 서비스만 확인할 수도 있습니다.
+특정 서비스 로그만 확인할 수도 있다.
 
 ```bash
 docker compose logs -f backend
@@ -264,57 +213,43 @@ docker compose logs -f frontend
 docker compose logs -f mysql
 ```
 
-### 8.6 종료
+서비스를 종료할 때는 다음 명령을 사용한다.
 
 ```bash
 docker compose down
 ```
 
-DB volume까지 삭제하고 초기화하려면 다음 명령을 사용합니다.
+DB volume까지 삭제하여 처음 상태로 되돌릴 때만 다음 명령을 사용한다.
 
 ```bash
 docker compose down -v
 ```
 
-`down -v`는 저장된 MySQL 데이터도 삭제하므로 필요할 때만 사용해야 합니다.
-
-### 8.7 DB 비밀번호 변경 후 접속 오류가 나는 경우
-
-테스트하면서 확인한 점으로, MySQL은 처음 초기화될 때의 사용자/비밀번호 정보를 `mysql-data` volume에 저장합니다. 그래서 `.env`에서 `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `DB_PASSWORD`를 바꾼 뒤 기존 volume을 그대로 쓰면 backend가 DB에 접속하지 못할 수 있습니다.
-
-로컬 데이터를 초기화해도 되는 상황이면 다음 명령으로 volume을 삭제한 뒤 다시 실행합니다.
-
-```bash
-docker compose down -v
-docker compose up --build -d
-```
-
-`docker compose down -v`는 저장된 MySQL 데이터를 삭제하므로 필요한 데이터가 있으면 먼저 백업합니다.
+`down -v`는 `mysql-data` volume을 삭제하므로 저장된 노트도 함께 삭제된다.
 
 ---
 
-## 9. API 요약
+## 8. 서비스 접속 방법
 
-Backend 기본 주소는 `http://localhost:5001/api`입니다. Frontend에서는 `/api`로 요청하고, Nginx가 내부적으로 backend 서비스에 전달합니다.
+브라우저에서 다음 주소로 접속한다.
 
-| Method | Endpoint | 설명 |
-| --- | --- | --- |
-| `GET` | `/api/health` | API 서버와 DB 연결 상태 확인 |
-| `GET` | `/api/notes` | 노트 목록 조회, 검색/카테고리/중요 필터 지원 |
-| `GET` | `/api/notes/search?q=키워드` | 검색 전용 API |
-| `GET` | `/api/notes/:id` | 특정 노트 조회 |
-| `POST` | `/api/notes` | 새 노트 작성 |
-| `PUT` | `/api/notes/:id` | 노트 수정 |
-| `PATCH` | `/api/notes/:id/important` | 중요 표시 변경 |
-| `DELETE` | `/api/notes/:id` | 노트 삭제 |
+```text
+http://localhost:8080
+```
 
-Health check 예시:
+API 서버와 DB 연결 상태는 다음 주소로 확인할 수 있다.
+
+```text
+http://localhost:5001/api/health
+```
+
+명령어로 확인하려면 다음과 같이 실행한다.
 
 ```bash
 curl http://localhost:5001/api/health
 ```
 
-예상 응답:
+정상 응답 예시는 다음과 같다.
 
 ```json
 {
@@ -327,72 +262,58 @@ curl http://localhost:5001/api/health
 
 ---
 
-## 10. 주요 기능
+## 9. 주요 기능
 
-| 기능 | 설명 |
-| --- | --- |
-| 노트 작성(Create) | 제목, 카테고리, 내용, 중요 여부를 입력해 노트를 저장합니다. |
-| 노트 조회(Read) | 저장된 노트를 최신순으로 조회하고, 중요 노트를 강조합니다. |
-| 노트 수정(Update) | 기존 노트를 불러와 제목, 내용, 카테고리, 중요 여부를 수정합니다. |
-| 노트 삭제(Delete) | 선택한 노트를 삭제하고 목록을 다시 불러옵니다. |
-| 검색 | 제목 또는 내용에 포함된 키워드로 노트를 찾습니다. |
-| 카테고리 필터 | `General`, `Lecture`, `Assignment`, `Exam`, `Project`, `Reading` 등으로 필터링합니다. |
-| 중요 표시 | 별 아이콘으로 중요 노트를 표시하고, 중요한 노트만 볼 수 있습니다. |
-| 반응형 UI | 데스크톱에서는 2-column, 작은 화면에서는 세로 배치로 표시됩니다. |
+본 프로젝트에서 구현한 주요 기능은 다음과 같다.
+
+- 노트 작성: 제목, 내용, 카테고리, 중요 여부를 입력하여 새 노트를 저장한다.
+- 노트 조회: 저장된 노트를 최신순으로 조회하고, 중요 표시된 노트를 위쪽에 보여준다.
+- 노트 수정: 기존 노트를 불러와 제목, 내용, 카테고리, 중요 여부를 수정한다.
+- 노트 삭제: 선택한 노트를 삭제하고 목록을 다시 불러온다.
+- 검색: 제목 또는 내용에 포함된 키워드로 노트를 찾는다.
+- 카테고리 필터: `General`, `Lecture`, `Assignment`, `Exam`, `Project`, `Reading` 등의 카테고리로 필터링한다.
+- 중요 표시: 별 아이콘으로 중요 노트를 표시하고, 중요한 노트만 따로 볼 수 있다.
+- 반응형 화면: 데스크톱에서는 2-column 형태로, 작은 화면에서는 세로 배치로 표시된다.
 
 ---
 
-## 11. 데이터 저장 방식
+## 10. 데이터 유지 방식
 
-MySQL 데이터는 named volume에 저장됩니다.
-
-```yaml
-volumes:
-  mysql-data:
-```
-
-MySQL 컨테이너에는 다음과 같이 연결됩니다.
+MySQL 데이터는 Docker named volume인 `mysql-data`에 저장된다. `docker-compose.yml`에서는 MySQL 컨테이너의 `/var/lib/mysql` 경로에 이 volume을 연결한다.
 
 ```yaml
 volumes:
   - mysql-data:/var/lib/mysql
 ```
 
-이 설정으로 `docker compose down` 후 다시 실행해도 데이터가 유지됩니다. 단, `docker compose down -v`를 실행하면 volume이 삭제되어 DB가 초기화됩니다.
+이 설정 때문에 컨테이너를 종료했다가 다시 실행해도 기존 데이터가 유지된다. 다만 `docker compose down -v`를 실행하면 volume이 삭제되어 DB가 초기화된다.
+
+비밀번호를 변경할 때도 이 점을 주의해야 한다. MySQL은 처음 초기화될 때 사용자와 비밀번호 정보를 volume에 저장한다. 따라서 `.env`에서 `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `DB_PASSWORD`를 변경한 뒤 기존 volume을 그대로 사용하면 backend가 DB에 접속하지 못할 수 있다. 로컬 데이터를 삭제해도 되는 상황이라면 다음 순서로 다시 실행한다.
+
+```bash
+docker compose down -v
+docker compose up --build -d
+```
 
 ---
 
-## 12. 실행 결과 캡처/시연 영상 제출 안내
+## 11. 실행 결과 캡처 또는 시연 영상 제출 안내
 
-실행 결과 캡처나 시연 영상은 저장소에 넣기보다 과제 제출 시스템에 따로 첨부할 예정입니다. 제출할 때는 아래 항목을 기준으로 캡처하면 됩니다.
+실행 결과 캡처나 시연 영상은 저장소에 직접 넣지 않고 과제 제출 시스템에 별도로 첨부할 예정이다. 제출 시에는 다음 내용을 확인할 수 있도록 준비한다.
 
-최소 캡처 항목:
+- `docker compose up --build -d` 실행 화면
+- `docker compose ps`에서 3개 컨테이너가 실행 중이고 MySQL이 healthy인 화면
+- `http://localhost:8080` 접속 화면
+- 노트 생성 후 목록에 표시되는 화면
+- 노트 수정 또는 삭제 기능을 확인할 수 있는 화면
+- 검색, 카테고리 필터, 중요 표시 중 하나 이상을 확인할 수 있는 화면
+- `http://localhost:5001/api/health` 또는 `curl` 결과로 backend와 DB 연결 상태를 확인한 화면
 
-| 파일명 예시 | 캡처 내용 | 평가 근거 |
-| --- | --- | --- |
-| `01-docker-compose-up.png` | `docker compose up --build -d` 실행 결과 | Compose로 전체 서비스 실행 가능 |
-| `02-docker-compose-ps.png` | `docker compose ps` 결과 | 3개 컨테이너 실행 및 MySQL healthy 확인 |
-| `03-main-page.png` | `http://localhost:8080` 접속 화면 | Presentation Tier 동작 확인 |
-| `04-create-note.png` | 노트 생성 화면 또는 생성 후 목록 | CRUD Create/Read 확인 |
-| `05-edit-note.png` | 노트 수정 화면 또는 수정 후 목록 | CRUD Update 확인 |
-| `06-delete-note.png` | 노트 삭제 전/후 화면 | CRUD Delete 확인 |
-| `07-search-filter.png` | 검색 또는 카테고리 필터 결과 | 주요 기능 확인 |
-| `08-health-check.png` | `curl http://localhost:5001/api/health` 또는 브라우저 응답 | Application/Data Tier 연결 확인 |
-
-시연 영상으로 제출하는 경우에는 다음 흐름을 포함하면 됩니다.
-
-1. `docker compose up --build -d` 실행
-2. `docker compose ps`로 `frontend`, `backend`, `mysql` 상태 확인
-3. `http://localhost:8080` 접속
-4. 노트 생성, 조회, 수정, 삭제 시연
-5. 검색/카테고리/중요 표시 중 1개 이상 시연
-6. `http://localhost:5001/api/health`로 DB 연결 상태 확인
-
-실제 캡처 이미지나 영상 파일은 저장소에 넣지 않고 과제 제출 시스템에 별도로 첨부합니다.
+시연 영상으로 제출하는 경우에는 Compose 실행, 컨테이너 상태 확인, 웹 화면 접속, CRUD 기능, 검색 또는 필터 기능, health check 확인 순서로 보여주면 된다.
 
 ---
 
-## 13. 프로젝트 구조
+## 12. 프로젝트 구조
 
 ```text
 Study_Note_Manager/
@@ -417,82 +338,74 @@ Study_Note_Manager/
 
 ---
 
-## 14. AI 활용 기록
+## 13. AI 활용 기록
 
-개발하면서 AI를 참고한 내용은 `AI_PROMPTS.md`에 따로 정리했습니다.
+개발 과정에서 AI는 구조 검토, 오류 원인 확인, 문서 초안 정리, 보안 점검에 보조적으로 활용하였다. AI가 제안한 내용을 그대로 사용하지 않고, 실제 `docker-compose.yml`, backend/frontend 코드, 실행 결과와 대조한 뒤 필요한 부분만 수정하여 반영하였다.
 
-해당 문서에는 주로 다음 내용을 적었습니다.
-
-- 사용한 프롬프트 요약
-- 프롬프트를 사용한 목적
-- 실제 프로젝트에 반영된 내용
-- Docker, 3-tier 구조, UI 개선, 오류 해결 과정
+자세한 프롬프트 사용 내역은 `AI_PROMPTS.md`에 정리하였다.
 
 ---
 
-## 15. 트러블슈팅
+## 14. 트러블슈팅
 
-| 증상 | 원인 후보 | 해결 방법 |
-| --- | --- | --- |
-| `docker compose` 명령이 실패함 | Docker Desktop/daemon 미실행 | Docker Desktop을 실행한 뒤 `docker compose config` 재시도 |
-| MySQL은 실행되지만 backend가 DB 접속 실패 | 기존 `mysql-data` volume에 이전 비밀번호가 저장됨 | 로컬 데이터 삭제가 가능하면 `docker compose down -v` 후 재실행 |
-| `localhost:8080` 접속 실패 | frontend 컨테이너 미실행 또는 포트 충돌 | `docker compose ps`, `docker compose logs frontend` 확인 |
-| `localhost:5001/api/health`가 실패 | backend 또는 DB 연결 문제 | `docker compose logs backend`, `docker compose logs mysql` 확인 |
-| 포트 충돌 | 8080/5001/3307을 다른 프로세스가 사용 | `.env`에서 `FRONTEND_PORT`, `BACKEND_PORT`, `MYSQL_PORT` 변경 |
+Docker 실행이나 서비스 접속 과정에서 자주 확인할 항목은 다음과 같다.
+
+- `docker compose` 명령이 실패하면 Docker Desktop 또는 Docker daemon이 실행 중인지 확인한다.
+- `localhost:8080` 접속이 실패하면 `docker compose ps`와 `docker compose logs frontend`로 frontend 컨테이너 상태를 확인한다.
+- `localhost:5001/api/health`가 실패하면 `docker compose logs backend`와 `docker compose logs mysql`로 backend와 DB 연결 상태를 확인한다.
+- MySQL은 실행되지만 backend가 DB 접속에 실패하면 기존 `mysql-data` volume에 이전 비밀번호가 저장되어 있을 수 있다. 로컬 데이터 삭제가 가능하면 `docker compose down -v` 후 다시 실행한다.
+- 8080, 5001, 3307 포트를 다른 프로세스가 사용 중이면 `.env`에서 `FRONTEND_PORT`, `BACKEND_PORT`, `MYSQL_PORT` 값을 변경한다.
 
 ---
 
-## 16. 보안상 주의사항
+## 15. 보안상 주의사항
 
-- 실제 실행 비밀번호는 `.env.example`이 아니라 로컬 전용 `.env`에만 작성합니다. 비밀번호 관련 Compose 값은 placeholder fallback 없이 환경변수에서만 읽습니다.
-- `.env`는 `.gitignore`에 포함되어 있으며 Git에 커밋하지 않습니다.
-- `.env.example`에는 `REPLACE_WITH_STRONG_LOCAL_DB_PASSWORD` 같은 placeholder만 둡니다.
-- backend와 mysql의 호스트 포트는 `127.0.0.1`에 바인딩해 로컬 개발 범위로 제한합니다.
-- CORS는 모든 origin(`*`)을 허용하지 않고 기본적으로 `http://localhost:8080`만 허용합니다.
-- 제출 전 다음 명령으로 실제 `.env`가 추적되지 않는지 확인합니다.
+실제 실행 비밀번호는 `.env.example`이 아니라 로컬 전용 `.env` 파일에만 작성한다. `.env`는 `.gitignore`에 포함되어 있으므로 Git에 커밋하지 않는다.
+
+`.env.example`과 `backend/.env.example`에는 placeholder 값만 두었다. 제출 전에는 다음 명령으로 실제 `.env` 파일이 Git에 포함되지 않았는지 확인한다.
 
 ```bash
 git ls-files | grep '\.env'
 ```
 
-정상적으로는 `.env.example`, `backend/.env.example`만 표시되어야 합니다.
+정상적으로는 `.env.example`, `backend/.env.example` 같은 예시 파일만 표시되어야 한다.
+
+또한 backend와 mysql의 호스트 포트는 `127.0.0.1`에만 바인딩하여 로컬 실행 범위로 제한하였다. CORS도 모든 origin을 허용하지 않고 기본적으로 `http://localhost:8080`만 허용하도록 설정하였다.
 
 ---
 
-## 17. 제출 전 확인 명령
+## 16. 제출 전 확인 명령
+
+제출 전에는 다음 명령으로 문서와 실제 실행 설정이 맞는지 확인한다.
 
 ```bash
-git status
+git status --short
 git ls-files | grep '\.env'
 docker compose config
 cd backend && npm run check
-node --check frontend/js/app.js
-docker compose up --build -d
+node --check ../frontend/js/app.js
 ```
 
-확인할 내용:
+서비스 실행까지 확인할 경우에는 루트 디렉터리에서 다음 명령을 사용한다.
 
-- `.env` 파일이 Git에 포함되지 않았는지 확인합니다.
-- `.env.example`, `backend/.env.example`만 제출용 예시 파일로 포함합니다.
-- `node_modules`, Docker volume, 임시 파일이 Git에 포함되지 않았는지 확인합니다.
-- `http://localhost:8080`에서 화면이 열리는지 확인합니다.
-- `http://localhost:5001/api/health`에서 DB 연결 상태가 정상인지 확인합니다.
+```bash
+docker compose up --build -d
+docker compose ps
+curl http://localhost:5001/api/health
+```
 
----
+확인할 내용은 다음과 같다.
 
-## 18. 제출 산출물
-
-| 파일/폴더 | 설명 |
-| --- | --- |
-| `README.md` | 프로젝트 개요, 3-tier 구조, 실행 방법, 포트, 컨테이너 연결 방식 설명 |
-| `AI_PROMPTS.md` | 사용한 AI 프롬프트, 사용 목적, 반영 내용 정리 |
-| `HANDOFF.md` | 실행 방법, 검증 명령, 제출 전 주의사항 요약 |
-| 실행 결과 캡처 또는 시연 영상 | 저장소에 포함하지 않고 과제 제출 시스템에 별도 첨부 |
+- `frontend`, `backend`, `mysql` 세 컨테이너가 실행되는지 확인한다.
+- `http://localhost:8080`에서 웹 화면이 열리는지 확인한다.
+- `http://localhost:5001/api/health`에서 DB 연결 상태가 정상인지 확인한다.
+- `.env` 파일, `node_modules`, Docker volume, 임시 파일이 Git에 포함되지 않았는지 확인한다.
+- 실행 결과 캡처 또는 시연 영상은 저장소가 아니라 과제 제출 시스템에 별도로 첨부한다.
 
 ---
 
-## 19. 정리
+## 17. 정리
 
-Study Note Manager는 `frontend`, `backend`, `mysql` 세 컨테이너로 구성한 Docker Compose 기반 3-tier 웹서비스입니다. 사용자는 `http://localhost:8080`에서 노트를 관리하고, frontend는 `/api` 요청을 backend로 넘기며, backend는 MySQL에 데이터를 저장합니다.
+Study Note Manager는 `frontend`, `backend`, `mysql` 세 컨테이너로 구성한 Docker Compose 기반 3-tier 웹서비스이다. 사용자는 `http://localhost:8080`에서 노트를 관리하고, frontend는 `/api` 요청을 backend로 전달하며, backend는 MySQL에 데이터를 저장하거나 조회한다.
 
-과제에서 요구한 3-tier 구분, 컨테이너 역할, 연결 방식, 포트 정보, 실행 방법, AI 활용 기록은 README와 별도 문서에 정리해 두었습니다.
+본 프로젝트에서는 과제에서 요구한 3-tier 구분, 컨테이너 역할, 연결 방식, 포트 정보, 주요 설정, 실행 방법, AI 활용 기록을 문서로 정리하였다. Markdown 원문으로 읽어도 흐름을 이해할 수 있도록 표와 Mermaid 흐름도 의존을 줄이고, 문장 중심의 보고서 형식으로 작성하였다.
