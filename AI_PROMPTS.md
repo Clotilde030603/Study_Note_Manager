@@ -272,9 +272,3 @@ curl http://localhost:5001/api/health || true
 ```
 
 CRUD 기능은 `/api/notes`에 대해 POST, GET, PUT, 검색/필터, DELETE 순서로 확인했다.
-
----
-
-## 5. 제출 시 별도 첨부 항목
-
-실행 화면 캡처 또는 시연 영상은 저장소에 포함하지 않고 과제 제출 시스템에 별도로 첨부한다.
