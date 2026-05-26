@@ -1,12 +1,14 @@
 # Study Note Manager HANDOFF
 
-이 문서는 제출 전 다시 실행하거나 확인할 때 참고하기 위한 간단한 인수인계 메모이다. 전체 설명은 `README.md`, AI 활용 기록은 `AI_PROMPTS.md`에 정리하였다.
+이 문서는 제출 전 다시 실행하거나 확인할 때 보기 위한 간단한 메모이다. 전체 설명은 `README.md`, AI 활용 기록은
+`AI_PROMPTS.md`에 정리했다.
 
 ---
 
 ## 1. 현재 프로젝트 상태
 
-Study Note Manager는 Docker Compose 기반 3-tier 웹서비스이다. Presentation Tier는 `frontend` 컨테이너, Application Tier는 `backend` 컨테이너, Data Tier는 `mysql` 컨테이너가 담당한다.
+Study Note Manager는 Docker Compose 기반 3-tier 웹서비스이다. Presentation Tier는 `frontend` 컨테이너,
+Application Tier는 `backend` 컨테이너, Data Tier는 `mysql` 컨테이너가 담당한다.
 
 각 컨테이너의 역할은 다음과 같다.
 
@@ -111,7 +113,7 @@ http://localhost:8080
 제출 시 확인할 문서는 다음과 같다.
 
 - `README.md`: 과제 보고서 메인 문서이다. 3-tier 구조, 컨테이너 역할, 연결 방식, 포트, 주요 설정, 실행 방법을 설명한다.
-- `AI_PROMPTS.md`: AI를 어떤 목적으로 사용했고 어떤 내용을 반영했는지 정리한 문서이다.
+- `AI_PROMPTS.md`: AI를 어떤 목적으로 사용했고 어떤 내용을 프로젝트에 맞게 적용했는지 정리한 문서이다.
 - `HANDOFF.md`: 제출 전 실행과 검증을 빠르게 확인하기 위한 메모이다.
 
-Markdown 원문으로 읽어도 이해할 수 있도록 표와 Mermaid 흐름도 의존을 줄였고, 문장 중심의 과제 보고서 형식으로 정리하였다.
+세 문서는 Markdown 원문으로도 읽을 수 있도록 문장 중심으로 정리했다.
