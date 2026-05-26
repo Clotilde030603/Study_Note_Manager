@@ -114,3 +114,17 @@ http://localhost:8080
 - `README.md`: 과제 보고서 메인 문서이다. 3-tier 구조, 컨테이너 역할, 연결 방식, 포트, 주요 설정, 실행 방법을 설명한다.
 - `AI_PROMPTS.md`: AI를 어떤 목적으로 사용했고 어떤 내용을 프로젝트에 맞게 적용했는지 정리한 문서이다.
 - `HANDOFF.md`: 제출 전 실행과 검증을 빠르게 확인하기 위한 메모이다.
+
+---
+
+## 6. 캡처 또는 시연 영상 체크리스트
+
+과제 제출 전에 아래 화면은 따로 캡처하거나 영상에 포함하면 된다.
+
+- `docker compose up --build -d` 실행 화면
+- `docker compose ps`에서 `frontend`, `backend`, `mysql` 세 컨테이너가 보이는 화면
+- `http://localhost:8080` 접속 화면
+- 노트 생성 후 목록에 표시되는 화면
+- 노트 수정 또는 삭제를 확인할 수 있는 화면
+- 검색, 카테고리 필터, 중요 표시 중 하나 이상을 확인한 화면
+- `curl http://localhost:5001/api/health` 또는 브라우저 health check 결과
