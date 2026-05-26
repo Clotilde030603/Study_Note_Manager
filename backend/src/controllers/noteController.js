@@ -25,7 +25,7 @@ function sendDatabaseError(res, error) {
   });
 }
 
-// README 설명용: GET /api/notes는 목록 조회, 검색, 카테고리 필터, 중요 표시 필터를 한 API에서 처리한다.
+// 목록 조회, 검색, 카테고리 필터, 중요 표시 필터를 한 API에서 처리한다.
 async function getNotes(req, res) {
   const { search, category, important } = req.query;
   const conditions = [];
@@ -66,7 +66,7 @@ async function getNotes(req, res) {
   }
 }
 
-// README 설명용: GET /api/notes/search?q=키워드 는 검색 기능을 명확히 보여주기 위한 전용 검색 API다.
+// 검색 기능을 명확히 확인하기 위한 전용 검색 API다.
 async function searchNotes(req, res) {
   const keyword = (req.query.q || req.query.keyword || req.query.search || '').trim();
 
@@ -116,7 +116,7 @@ async function getNoteById(req, res) {
   }
 }
 
-// README 설명용: POST /api/notes는 제목, 내용, 카테고리, 중요 표시 값을 JSON body로 받아 저장한다.
+// 노트 생성 API
 async function createNote(req, res) {
   const title = (req.body.title || '').trim();
   const content = (req.body.content || '').trim();
@@ -154,7 +154,7 @@ async function createNote(req, res) {
   }
 }
 
-// README 설명용: PUT /api/notes/:id는 기존 노트의 제목, 내용, 카테고리, 중요 표시를 수정한다.
+// 노트 수정 API
 async function updateNote(req, res) {
   const title = (req.body.title || '').trim();
   const content = (req.body.content || '').trim();
@@ -206,7 +206,7 @@ async function updateNote(req, res) {
   }
 }
 
-// README 설명용: DELETE /api/notes/:id는 URL의 id에 해당하는 노트를 삭제한다.
+// 노트 삭제 API
 async function deleteNote(req, res) {
   try {
     const [result] = await pool.execute('DELETE FROM notes WHERE id = :id', { id: req.params.id });
@@ -225,7 +225,7 @@ async function deleteNote(req, res) {
   }
 }
 
-// README 설명용: PATCH /api/notes/:id/important는 중요 표시만 빠르게 변경하기 위한 API다.
+// 중요 표시 변경 API
 async function updateImportant(req, res) {
   if (req.body.isImportant === undefined) {
     return res.status(400).json({ success: false, message: 'isImportant is required.' });

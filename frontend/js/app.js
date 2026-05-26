@@ -1,4 +1,4 @@
-// README 설명용: window.APP_CONFIG.API_BASE_URL은 컨테이너 환경변수로 생성되는 env.js에서 주입된다.
+// window.APP_CONFIG.API_BASE_URL은 컨테이너 환경변수로 생성되는 env.js에서 주입된다.
 const API_BASE_URL = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || '/api';
 
 const elements = {
@@ -128,7 +128,7 @@ function buildQuery() {
   return params.toString();
 }
 
-// README 설명용: 노트 목록 조회, 검색, 카테고리 필터, 중요 필터는 GET /api/notes 쿼리스트링으로 처리한다.
+// 노트 목록 조회, 검색, 카테고리 필터, 중요 필터는 GET /api/notes 쿼리스트링으로 처리한다.
 async function loadNotes() {
   try {
     setMessage('노트를 불러오는 중입니다.');
@@ -181,7 +181,7 @@ function renderNotes(notes) {
   }).join('');
 }
 
-// README 설명용: 노트 작성/수정 폼은 같은 입력 폼을 재사용하며 POST 또는 PUT JSON 요청을 전송한다.
+// 노트 작성/수정 폼은 같은 입력 폼을 재사용하며 POST 또는 PUT JSON 요청을 전송한다.
 async function handleSubmitNote(event) {
   event.preventDefault();
 

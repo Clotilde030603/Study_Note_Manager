@@ -7,7 +7,7 @@ const healthRoutes = require('./routes/healthRoutes');
 
 const app = express();
 
-// README 설명용: frontend 컨테이너 또는 localhost 개발 환경에서 API를 호출할 수 있도록 CORS를 허용한다.
+// CORS 기본 origin은 로컬 frontend 주소로 제한한다.
 // 보안상 환경변수 누락 시 모든 origin(*)을 허용하지 않고 로컬 과제 실행 주소로만 제한한다.
 const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:8080';
 if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
@@ -18,7 +18,7 @@ app.use(cors({
   origin: corsOrigin
 }));
 
-// README 설명용: 모든 API 요청/응답은 UTF-8 JSON을 기본 형식으로 사용한다.
+// API 요청/응답은 UTF-8 JSON을 기본 형식으로 사용한다.
 app.use(express.json({ type: 'application/json' }));
 app.use((req, res, next) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');

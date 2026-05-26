@@ -3,7 +3,7 @@ const { pool } = require('../db/pool');
 
 const router = express.Router();
 
-// README 설명용: /api/health는 서버와 DB 연결 상태를 JSON으로 확인하는 상태 점검 API다.
+// /api/health는 서버와 DB 연결 상태를 JSON으로 확인하는 상태 점검 API다.
 router.get('/', async (req, res) => {
   try {
     await pool.query('SELECT 1');
