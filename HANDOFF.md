@@ -7,9 +7,9 @@
 ## 1. 현재 프로젝트 상태
 
 Study Note Manager는 Docker Compose 기반 3-tier 웹서비스이다. Presentation Tier는 `frontend` 컨테이너,
-Application Tier는 `backend` 컨테이너, Data Tier는 `mysql` 컨테이너가 담당한다.
+Application Tier는 `backend` 컨테이너, Data Tier는 `mysql` 컨테이너가 맡는다.
 
-컨테이너별 역할은 아래처럼 정리했다.
+컨테이너별 역할은 아래처럼 보면 된다.
 
 - `frontend` / `study-note-frontend`: Nginx로 웹 화면을 제공하고 `/api` 요청을 backend로 프록시한다.
 - `backend` / `study-note-backend`: Express API 서버로 노트 CRUD, 검색, 필터, 중요 표시 기능을 처리한다.
@@ -114,5 +114,3 @@ http://localhost:8080
 - `README.md`: 과제 보고서 메인 문서이다. 3-tier 구조, 컨테이너 역할, 연결 방식, 포트, 주요 설정, 실행 방법을 설명한다.
 - `AI_PROMPTS.md`: AI를 어떤 목적으로 사용했고 어떤 내용을 프로젝트에 맞게 적용했는지 정리한 문서이다.
 - `HANDOFF.md`: 제출 전 실행과 검증을 빠르게 확인하기 위한 메모이다.
-
-세 문서는 Markdown 원문으로 열어 봐도 읽기 어렵지 않도록 문장 중심으로 정리했다.
