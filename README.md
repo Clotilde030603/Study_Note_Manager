@@ -336,23 +336,6 @@ docker compose up --build -d
 
 ---
 
-## 11. 실행 결과 캡처 또는 시연 영상 제출 안내
-
-실행 결과 캡처나 시연 영상은 저장소에 직접 넣지 않고 과제 제출 시스템에 별도로 첨부할 예정이다. 제출 시에는 다음 내용을 확인할 수 있도록 준비한다.
-
-- `docker compose up --build -d` 실행 화면
-- `docker compose ps`에서 3개 컨테이너가 실행 중이고 MySQL이 healthy인 화면
-- `http://localhost:8080` 접속 화면
-- 노트 생성 후 목록에 표시되는 화면
-- 노트 수정 또는 삭제 기능을 확인할 수 있는 화면
-- 검색, 카테고리 필터, 중요 표시 중 하나 이상을 확인할 수 있는 화면
-- `http://localhost:5001/api/health` 또는 `curl` 결과로 backend와 DB 연결 상태를 확인한 화면
-
-시연 영상으로 제출하는 경우에는 Compose 실행, 컨테이너 상태 확인, 웹 화면 접속, CRUD 기능, 검색 또는 필터 기능, health check 확인 순서로
-보여주면 된다.
-
----
-
 ## 12. 프로젝트 구조
 
 ```text
@@ -361,7 +344,6 @@ Study_Note_Manager/
 ├── .env.example                # Docker Compose 환경변수 예시
 ├── README.md                   # 과제 보고서 문서
 ├── AI_PROMPTS.md               # AI 활용 프롬프트 기록
-├── HANDOFF.md                  # 실행 및 제출 전 확인 요약
 ├── backend/                    # Application Tier
 │   ├── Dockerfile
 │   ├── package.json
