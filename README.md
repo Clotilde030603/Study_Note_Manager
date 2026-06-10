@@ -336,7 +336,7 @@ docker compose up --build -d
 
 ---
 
-## 12. 프로젝트 구조
+## 11. 프로젝트 구조
 
 ```text
 Study_Note_Manager/
@@ -360,7 +360,7 @@ Study_Note_Manager/
 
 ---
 
-## 13. AI 활용 기록
+## 12. AI 활용 기록
 
 개발 과정에서 AI는 구조 검토, 오류 원인 확인, 문서 초안 정리, 보안 점검에 보조적으로 사용했다. AI가 제안한 내용을 그대로 사용하지 않고, 실제
 `docker-compose.yml`, backend/frontend 코드, 실행 결과와 대조한 뒤 필요한 부분만 프로젝트에 맞게 수정했다.
@@ -369,7 +369,7 @@ Study_Note_Manager/
 
 ---
 
-## 14. 트러블슈팅
+## 13. 트러블슈팅
 
 실행하다가 문제가 생기면 아래 항목부터 확인하면 된다.
 
@@ -385,7 +385,7 @@ Study_Note_Manager/
 
 ---
 
-## 15. 보안상 주의사항
+## 14. 보안상 주의사항
 
 실제 실행 비밀번호는 `.env.example`이 아니라 로컬 전용 `.env` 파일에만 작성한다. `.env`는 `.gitignore`에 포함되어 있으므로 Git에
 커밋하지 않는다.
@@ -404,7 +404,7 @@ git ls-files | grep '\.env'
 
 ---
 
-## 16. 제출 전 확인 명령
+## 15. 제출 전 확인 명령
 
 제출 전에는 다음 명령으로 문서와 실제 실행 설정이 맞는지 확인한다.
 
@@ -434,7 +434,7 @@ curl http://localhost:5001/api/health
 
 ---
 
-## 17. 정리
+## 16. 정리
 
 Study Note Manager는 `frontend`, `backend`, `mysql` 세 컨테이너로 구성한 Docker Compose 기반 3-tier
 웹서비스이다. 사용자는 `http://localhost:8080`에서 노트를 관리하고, frontend는 `/api` 요청을 backend로 전달하며,
